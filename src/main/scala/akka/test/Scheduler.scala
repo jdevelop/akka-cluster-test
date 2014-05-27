@@ -15,11 +15,11 @@ object Scheduler {
 
   class SchedulerActor extends Actor with ActorLogging with PullTask {
 
-    var currentTasks: List[String] = Nil
+    var currentTasks: Iterator[String] = Iterator.empty
 
-    override def hasMoreTasksInQueue = currentTasks.isEmpty
+    override def hasMoreTasksInQueue = !currentTasks.isEmpty
 
-    override def nextTask: Option[WorkerMessage] = currentTasks.headOption.map(WorkerMessage.apply)
+    override def nextTask: Option[WorkerMessage] = if (currentTasks.hasNext) Some(WorkerMessage(currentTasks.next())) else None
 
     override def preStartRouter = {
       context.actorOf(FromConfig.props(Props[WorkerActor]), "router_chunkworker")
@@ -30,10 +30,14 @@ object Scheduler {
     override def receive = {
       case SchedulerMessage(id, msg) ⇒
         log.info("Received message: {} ⇒ {}", id, msg)
+        currentTasks = msg.split("\\s+").toList.iterator
         notifyChildrenHaveWork()
       case WorkerMessageResponse(src) ⇒
         log.info("Received {}", src)
         taskComplete(sender())
+        if (isComplete) {
+          log.info("Complete all")
+        }
       case x ⇒ handleReceive(x)
     }
 

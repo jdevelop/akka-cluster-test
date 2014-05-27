@@ -19,13 +19,17 @@ object Worker {
 
     override def receive = {
       case WorkerMessage(payLoad) ⇒
-        log.info("Got message: {}", payLoad)
+        log.info("Got message: {} ⇒ {}", sender(), payLoad)
         sender() ! WorkerMessageResponse(payLoad.toUpperCase)
       case AnnounceWorkAvailable ⇒
+        log.debug("Got new work msg, ask for task {}", sender())
         sender() ! GiveMeWork
       case MasterRegistration ⇒
+        log.debug("Register self to {}", sender())
         sender() ! WorkerRegistration
-      case xxx ⇒ println("GOT message " + xxx + " from " + sender())
+      case word: String ⇒
+        sender() ! WorkerMessageResponse(word.toUpperCase)
+      case xxx ⇒ log.error("Oooops {}", xxx)
     }
 
   }

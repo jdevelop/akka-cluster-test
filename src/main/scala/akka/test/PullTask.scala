@@ -53,10 +53,12 @@ trait PullTask extends Actor with ActorLogging {
     log.debug("Setting worker {} state to Idle", worker)
     workers.put(worker, Idle)
     tasksInProgress = tasksInProgress - 1
+    if (!isComplete) {
+      worker ! AnnounceWorkAvailable
+    }
   }
 
   def addWorker(worker: ActorRef) {
-    log.debug("Adding worker {}", worker)
     if (!(workers contains sender())) {
       log.debug("Added worker {}", worker)
       context watch sender()
@@ -87,6 +89,7 @@ trait PullTask extends Actor with ActorLogging {
         worker ! task
         log.debug("Task {} sent to {}", task, worker)
         workers.put(worker, InProgress(task))
+        tasksInProgress = tasksInProgress + 1
     }
   }
 

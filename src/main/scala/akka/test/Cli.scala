@@ -3,7 +3,7 @@ package akka.test
 import akka.actor._
 import akka.contrib.pattern.ClusterClient
 import akka.routing.ConsistentHashingRouter.ConsistentHashableEnvelope
-import akka.test.Messages.{WorkerMessageResponse, SchedulerMessage}
+import akka.test.Messages.SchedulerMessage
 import java.util.UUID
 
 /**
@@ -18,8 +18,11 @@ object Cli {
       system.actorSelection("akka.tcp://HttpCluster@127.0.0.1:2551/user/receptionist")
     )))
     val ref = system.actorOf(Props(new Controller(c)), "controller")
-    Thread.sleep(2000)
-    ref ! SchedulerMessage(UUID.randomUUID(), "Hey there!")
+    for (i <- 1 to 1) {
+      Thread.sleep(2000)
+      println("Send message " + i)
+      ref ! SchedulerMessage(UUID.randomUUID(), io.Source.fromInputStream(Cli.getClass.getResourceAsStream("/application.conf")).mkString)
+    }
   }
 
   trait LocalState
